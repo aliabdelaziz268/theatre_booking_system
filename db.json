@@ -1,0 +1,228 @@
+{
+  "movies": [
+    {
+      "id": "1",
+      "title": "The Dark Knight",
+      "description": "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests.",
+      "genre": "Action",
+      "duration": 152,
+      "rating": "PG-13",
+      "releaseDate": "2008-07-18",
+      "posterImage": "https://images.unsplash.com/photo-1509281373149-e957c6296406?w=800",
+      "trailerUrl": "https://www.youtube.com/watch?v=EXeTwQWrcwY"
+    },
+    {
+      "id": "2",
+      "title": "Inception",
+      "description": "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea.",
+      "genre": "Sci-Fi",
+      "duration": 148,
+      "rating": "PG-13",
+      "releaseDate": "2010-07-16",
+      "posterImage": "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800",
+      "trailerUrl": "https://www.youtube.com/watch?v=YoHD9XEInc0"
+    },
+    {
+      "id": "3",
+      "title": "The Shawshank Redemption",
+      "description": "Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.",
+      "genre": "Drama",
+      "duration": 142,
+      "rating": "R",
+      "releaseDate": "1994-09-23",
+      "posterImage": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800",
+      "trailerUrl": "https://www.youtube.com/watch?v=6hB3S9bIaco"
+    },
+    {
+      "id": "4",
+      "title": "Interstellar",
+      "description": "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival.",
+      "genre": "Sci-Fi",
+      "duration": 169,
+      "rating": "PG-13",
+      "releaseDate": "2014-11-07",
+      "posterImage": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800",
+      "trailerUrl": "https://www.youtube.com/watch?v=zSWdZVtXT7E"
+    },
+    {
+      "id": "5",
+      "title": "Joker",
+      "description": "In Gotham City, mentally troubled comedian Arthur Fleck is disregarded and mistreated by society.",
+      "genre": "Thriller",
+      "duration": 122,
+      "rating": "R",
+      "releaseDate": "2019-10-04",
+      "posterImage": "https://images.unsplash.com/photo-1594908900066-3f47337549d8?w=800",
+      "trailerUrl": "https://www.youtube.com/watch?v=zAGVQLHvwOY"
+    },
+    {
+      "id": "6",
+      "title": "Avengers: Endgame",
+      "description": "After the devastating events of Infinity War, the Avengers assemble once more to reverse Thanos' actions.",
+      "genre": "Action",
+      "duration": 181,
+      "rating": "PG-13",
+      "releaseDate": "2019-04-26",
+      "posterImage": "https://images.unsplash.com/photo-1608889175250-c3b0c1667d3a?w=800",
+      "trailerUrl": "https://www.youtube.com/watch?v=TcMBFSGVi1c"
+    }
+  ],
+  "showtimes": [
+    {
+      "id": "1",
+      "movieId": 1,
+      "showDate": "2026-12-15",
+      "showTime": "14:00",
+      "screenNumber": 1,
+      "totalSeats": 100,
+      "availableSeats": 75,
+      "price": 12.99
+    },
+    {
+      "id": "2",
+      "movieId": 1,
+      "showDate": "2026-12-15",
+      "showTime": "18:00",
+      "screenNumber": 1,
+      "totalSeats": 100,
+      "availableSeats": 50,
+      "price": 14.99
+    },
+    {
+      "id": "3",
+      "movieId": 2,
+      "showDate": "2026-12-15",
+      "showTime": "15:30",
+      "screenNumber": 2,
+      "totalSeats": 80,
+      "availableSeats": 60,
+      "price": 12.99
+    },
+    {
+      "id": "4",
+      "movieId": 2,
+      "showDate": "2026-12-15",
+      "showTime": "19:30",
+      "screenNumber": 2,
+      "totalSeats": 80,
+      "availableSeats": 40,
+      "price": 14.99
+    }
+  ],
+  "seats": [
+    {
+      "id": "1",
+      "showtimeId": 1,
+      "seatNumber": "A1",
+      "row": "A",
+      "column": 1,
+      "seatType": "regular",
+      "price": 12.99,
+      "isBooked": false
+    },
+    {
+      "id": "2",
+      "showtimeId": 1,
+      "seatNumber": "A2",
+      "row": "A",
+      "column": 2,
+      "seatType": "regular",
+      "price": 12.99,
+      "isBooked": false
+    }
+  ],
+  "foodItems": [
+    {
+      "id": "1",
+      "name": "Popcorn (Large)",
+      "description": "Freshly popped popcorn",
+      "price": 7.99,
+      "category": "Snacks",
+      "image": "https://images.unsplash.com/photo-1585647347384-2593bc35786b?w=400",
+      "available": true
+    },
+    {
+      "id": "2",
+      "name": "Coca Cola (Medium)",
+      "description": "Refreshing cola drink",
+      "price": 4.99,
+      "category": "Beverages",
+      "image": "https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400",
+      "available": true
+    },
+    {
+      "id": "3",
+      "name": "Nachos",
+      "description": "Crispy nachos with cheese",
+      "price": 6.99,
+      "category": "Snacks",
+      "image": "https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?w=400",
+      "available": true
+    }
+  ],
+  "bookings": [
+    {
+      "id": "57bb",
+      "userId": "d5c3",
+      "showtimeId": 1,
+      "movieId": "1",
+      "seats": [
+        "A1",
+        "A2",
+        "A3"
+      ],
+      "foodItems": [
+        {
+          "id": "2",
+          "quantity": 1,
+          "price": 4.99
+        },
+        {
+          "id": "3",
+          "quantity": 1,
+          "price": 6.99
+        }
+      ],
+      "totalPrice": 50.95,
+      "bookingDate": "2025-12-08T17:36:26.687Z",
+      "paymentMethodId": "1",
+      "status": "confirmed"
+    }
+  ],
+  "users": [
+    {
+      "id": "1",
+      "name": "Test User",
+      "email": "test@example.com",
+      "password": "password123",
+      "role": "user"
+    },
+    {
+      "id": "d5c3",
+      "name": "admin",
+      "email": "admin@example.com",
+      "password": "12345678",
+      "role": "user"
+    }
+  ],
+  "products": [
+    {
+      "id": "1",
+      "name": "Movie Merchandise T-Shirt",
+      "description": "Official movie merchandise t-shirt",
+      "price": 24.99,
+      "category": "Clothing",
+      "image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800",
+      "stock": 50
+    },
+    {
+      "id": "2",
+      "name": "Movie Poster",
+      "description": "High-quality movie poster",
+      "price": 14.99,
+      "category": "Posters",
+      "image": "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=800",
+      "stock": 100
+    }
+  ]
+}
