@@ -20,38 +20,7 @@ A modern, responsive movie ticket booking application built with React, Vite, an
 - **State Management**: Redux Toolkit
 - **Styling**: Tailwind CSS, Shadcn/UI
 - **Icons**: Lucide React
-- **Backend Mock**: JSON Server (running on port 5000)
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js (v16 or higher)
-- npm or yarn
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/aliabdelaziz268/theatre_booking_system.git
-   cd theatre_booking_system
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Start the application**
-   This command starts both the Vite development server and the JSON Server concurrently.
-   ```bash
-   npm run dev
-   # or
-   npm run server   # starts json-server only
-   ```
-
-4. **Access the app**
-   Open [http://localhost:5173](http://localhost:5173) in your browser.
+- **Backend Mock**: JSON Server
 
 ## Project Structure
 
@@ -71,7 +40,7 @@ src/
 
 ## API Endpoints (JSON Server)
 
-The application uses a local JSON Server running at `http://localhost:5000`. Key endpoints include:
+The application uses a local JSON Server . Key endpoints include:
 
 - `/movies`: List of all movies
 - `/showtimes`: Movie schedules
@@ -80,6 +49,3 @@ The application uses a local JSON Server running at `http://localhost:5000`. Key
 - `/users`: User accounts
 - `/foodItems`: Concession items
 
-## License
-
-This project is licensed under the MIT License.
