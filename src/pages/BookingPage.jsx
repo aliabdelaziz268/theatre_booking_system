@@ -1,174 +1,265 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Loader2, Armchair, ChevronLeft, Calendar, Clock, Plus, Minus, Popcorn, CreditCard } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Clock, Calendar, MapPin, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { MOCK_CARDS } from "@/data/mockData";
-
-const ROWS = ["A", "B", "C", "D", "E", "F", "G", "H"];
-const COLS = [1, 2, 3, 4, 5, 6, 7, 8];
+import { useAuth } from "@/hooks/useAuth";
+import SeatSelector from "@/components/booking/SeatSelector";
+import FoodSelector from "@/components/booking/FoodSelector";
+import PaymentMethodSelector from "@/components/booking/PaymentMethodSelector";
+import BookingSummary from "@/components/booking/BookingSummary";
+import {
+  toggleSeatSelection,
+  updateFoodQuantity,
+  setPaymentMethod,
+  clearCurrentBooking,
+  selectSelectedSeats,
+  selectSelectedFood,
+  selectPaymentMethod,
+} from "@/store/slices/bookingSlice";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function BookingPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const dispatch = useDispatch();
+  const { user, loading: isPending } = useAuth();
 
+  // Redux state
+  const selectedSeats = useSelector(selectSelectedSeats);
+  const selectedFood = useSelector(selectSelectedFood);
+  const paymentMethod = useSelector(selectPaymentMethod);
+
+  // Local state
   const [showtime, setShowtime] = useState(null);
-  const [movie, setMovie] = useState(null);
-  const [occupiedSeats, setOccupiedSeats] = useState([]);
-  const [selectedSeats, setSelectedSeats] = useState([]);
-
+  const [seats, setSeats] = useState([]);
   const [foodItems, setFoodItems] = useState([]);
-  const [selectedFood, setSelectedFood] = useState({});
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
-
   const [isLoading, setIsLoading] = useState(true);
   const [isBooking, setIsBooking] = useState(false);
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const showtimeRes = await fetch(`http://localhost:5000/showtimes/${id}`);
-        if (!showtimeRes.ok) throw new Error("Showtime not found");
-        const showtimeData = await showtimeRes.json();
-        setShowtime(showtimeData);
-
-        const movieRes = await fetch(`http://localhost:5000/movies/${showtimeData.movieId}`);
-        if (!movieRes.ok) throw new Error("Movie not found");
-        const movieData = await movieRes.json();
-        setMovie(movieData);
-
-        const bookingsRes = await fetch(`http://localhost:5000/bookings?showtimeId=${id}`);
-        const bookingsData = await bookingsRes.json();
-        const occupied = bookingsData.reduce((acc, booking) => {
-          return [...acc, ...booking.seats];
-        }, []);
-        setOccupiedSeats(occupied);
-
-        const foodRes = await fetch("http://localhost:5000/foodItems");
-        if (foodRes.ok) {
-          const foodData = await foodRes.json();
-          setFoodItems(foodData);
-        }
-
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        toast.error("Failed to load booking details");
-        navigate("/");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [id, navigate]);
-
-  const toggleSeat = (seatId) => {
-    if (occupiedSeats.includes(seatId)) return;
-
-    setSelectedSeats(prev => {
-      if (prev.includes(seatId)) {
-        return prev.filter(s => s !== seatId);
-      } else {
-        return [...prev, seatId];
-      }
-    });
-  };
-
-  const updateFoodQuantity = (itemId, change) => {
-    setSelectedFood(prev => {
-      const currentQty = prev[itemId] || 0;
-      const newQty = Math.max(0, currentQty + change);
-
-      if (newQty === 0) {
-        const { [itemId]: _, ...rest } = prev;
-        return rest;
-      }
-      return { ...prev, [itemId]: newQty };
-    });
-  };
-
-  const calculateTotal = () => {
-    const ticketTotal = selectedSeats.length * (showtime?.price || 0);
-    const foodTotal = Object.entries(selectedFood).reduce((total, [itemId, qty]) => {
-      const item = foodItems.find(f => f.id === itemId);
-      return total + (item ? item.price * qty : 0);
-    }, 0);
-    return ticketTotal + foodTotal;
-  };
-
-  const handleBooking = async () => {
-    if (!user) {
-      toast.error("Please login to book tickets");
-      navigate("/login");
+    if (!isPending && !user) {
+      navigate(`/login?redirect=/booking/${id}`);
       return;
     }
 
+    if (user) {
+      fetchShowtimeDetails();
+      fetchSeats();
+      fetchFoodItems();
+    }
+
+    // Clear booking when component unmounts
+    return () => {
+      // dispatch(clearCurrentBooking());
+    };
+  }, [id, user, isPending]);
+
+  const fetchShowtimeDetails = async () => {
+    try {
+      // Using json-server directly. Note: json-server returns an array when filtering, or object if getting by id directly via path
+      // Filter by id query param returns generic array, getting /showtimes/id returns object
+      const response = await fetch(`http://localhost:5000/showtimes/${id}`);
+      if (!response.ok) throw new Error("Failed to fetch showtime");
+
+      const data = await response.json();
+      // Ensure we get the movie details. json-server doesn't always expand relations by default unless ?_expand=movie is used
+      // Let's refetch movie if needed or check if it's included.
+      // Based on db.json, showtimes have movieId. We might need to fetch movie separately or use expand.
+      // Trying expand first:
+      const expandResponse = await fetch(`http://localhost:5000/showtimes/${id}?_expand=movie`);
+      if (expandResponse.ok) {
+        const expandedData = await expandResponse.json();
+        // If json-server supports it, we get movie object inside.
+        // If not, we might need manual fetch.
+        if (expandedData.movie) {
+          setShowtime(expandedData);
+          return;
+        }
+      }
+
+      // Fallback: Fetch movie manually
+      if (data.movieId) {
+        const movieRes = await fetch(`http://localhost:5000/movies/${data.movieId}`);
+        const movieData = await movieRes.json();
+        setShowtime({ ...data, movie: movieData });
+      } else {
+        setShowtime(data);
+      }
+
+    } catch (error) {
+      toast.error("Failed to load showtime details");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchSeats = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/seats?showtimeId=${id}`);
+      if (!response.ok) throw new Error("Failed to fetch seats");
+
+      let data = await response.json();
+
+      // If no seats exist in DB for this showtime, generate default layout
+      if (data.length === 0) {
+        data = generateDefaultSeats();
+      }
+
+      setSeats(data);
+    } catch (error) {
+      toast.error("Using default seat layout");
+      setSeats(generateDefaultSeats());
+    }
+  };
+
+  const generateDefaultSeats = () => {
+    const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+    const seatsPerRow = 8;
+    const generatedSeats = [];
+
+    rows.forEach((row, rowIndex) => {
+      for (let i = 1; i <= seatsPerRow; i++) {
+        generatedSeats.push({
+          id: `${id}-${row}${i}`, // Virtual ID
+          showtimeId: parseInt(id),
+          seatNumber: `${row}${i}`,
+          row: row,
+          column: i,
+          seatType: rowIndex > 5 ? 'premium' : 'regular',
+          price: rowIndex > 5 ? 14.99 : 12.99,
+          isBooked: Math.random() < 0.2 // Randomly book some seats for realism
+        });
+      }
+    });
+    return generatedSeats;
+  };
+
+  const fetchFoodItems = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/foodItems?available=true&_limit=50");
+      if (!response.ok) throw new Error("Failed to fetch food items");
+
+      const data = await response.json();
+      setFoodItems(data);
+    } catch (error) {
+      console.error("Failed to load food items:", error);
+    }
+  };
+
+  const handleSeatClick = (seat) => {
+    if (seat.isBooked) {
+      toast.error("This seat is already booked");
+      return;
+    }
+    dispatch(toggleSeatSelection(seat));
+  };
+
+  const handleFoodQuantityChange = (foodItem, delta) => {
+    const currentQty = selectedFood[foodItem.id] || 0;
+    const newQty = Math.max(0, currentQty + delta);
+    dispatch(updateFoodQuantity({ foodId: foodItem.id, quantity: newQty }));
+  };
+
+  const handlePaymentMethodSelect = (method) => {
+    dispatch(setPaymentMethod(method));
+  };
+
+  const calculateTotal = () => {
+    const seatsTotal = selectedSeats.length * (showtime?.price || 0);
+    const foodTotal = Object.keys(selectedFood).reduce((total, foodId) => {
+      const food = foodItems.find(f => f.id === parseInt(foodId));
+      return total + (food?.price || 0) * selectedFood[foodId];
+    }, 0);
+    return seatsTotal + foodTotal;
+  };
+
+  const handleInitialConfirm = () => {
     if (selectedSeats.length === 0) {
       toast.error("Please select at least one seat");
       return;
     }
-
-    setShowPaymentDialog(true);
+    setIsPaymentDialogOpen(true);
   };
 
-  const confirmBooking = async () => {
-    if (!selectedPaymentMethod) {
+  const handleFinalBooking = async () => {
+    if (!paymentMethod) {
       toast.error("Please select a payment method");
       return;
     }
 
     setIsBooking(true);
-
     try {
+      const token = localStorage.getItem("bearer_token"); // Still used for logic if needed, but not for json-server auth usually unless using custom middleware
       const bookingData = {
-        userId: user.id,
+        userId: user.id || "guest", // Ensure userId is present
         showtimeId: parseInt(id),
-        movieId: movie.id,
-        seats: selectedSeats,
-        foodItems: Object.entries(selectedFood).map(([itemId, quantity]) => ({
-          id: itemId,
-          quantity,
-          price: foodItems.find(f => f.id === itemId)?.price || 0
+        // movieId... will be inferred or we can add it if needed for stats
+        movieId: showtime.movieId,
+        seats: selectedSeats.map(s => s.seatNumber), // Or just IDs? db.json showed ["A1", "A2"]
+        seatIds: selectedSeats.map(s => s.id), // Keeping track of IDs might be useful
+        foodItems: Object.keys(selectedFood).map(foodId => ({
+          id: foodId, // db.json used "id" inside foodItems array but schema might vary. Let's send what matches db.json 'bookings' example.
+          // Example in db.json: { id: "2", quantity: 1, price: 4.99 }
+          quantity: selectedFood[foodId],
+          price: foodItems.find(f => f.id === parseInt(foodId))?.price || 0
         })),
-        totalPrice: parseFloat(calculateTotal().toFixed(2)),
+        totalPrice: calculateTotal(),
         bookingDate: new Date().toISOString(),
-        paymentMethodId: selectedPaymentMethod,
+        paymentMethodId: paymentMethod,
         status: "confirmed"
       };
 
       const response = await fetch("http://localhost:5000/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          // "Authorization": `Bearer ${token}` // json-server doesn't check this by default but good to keep
+        },
         body: JSON.stringify(bookingData)
       });
 
-      if (response.ok) {
-        const newBooking = await response.json();
-        toast.success("Booking successful!");
-        navigate(`/booking/success?id=${newBooking.id}`);
-      } else {
-        throw new Error("Booking failed");
+      if (!response.ok) {
+        throw new Error("Failed to create booking");
       }
 
+      const booking = await response.json();
+      toast.success("Booking confirmed successfully!");
+      dispatch(clearCurrentBooking());
+      setIsPaymentDialogOpen(false);
+      navigate(`/booking/success?id=${booking.id}`);
     } catch (error) {
-      console.error("Booking error:", error);
-      toast.error("Failed to complete booking. Please try again.");
+      toast.error(error.message || "Failed to complete booking");
+      console.error(error);
     } finally {
       setIsBooking(false);
-      setShowPaymentDialog(false);
     }
   };
 
-  if (isLoading) {
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  if (isPending || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -176,278 +267,134 @@ export default function BookingPage() {
     );
   }
 
-  if (!showtime || !movie) return null;
+  if (!showtime) {
+    return (
+      <div className="container mx-auto px-4 py-20 text-center">
+        <h1 className="text-2xl font-bold mb-4">Showtime not found</h1>
+        <Button onClick={() => navigate("/")}>Back to Home</Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <Button variant="ghost" className="mb-6" onClick={() => navigate(-1)}>
-        <ChevronLeft className="mr-2 h-4 w-4" />
-        Back
-      </Button>
+    <div className="min-h-screen bg-muted/30">
+      <div className="container mx-auto px-4 py-8">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          className="mb-6"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Select Seats</CardTitle>
-              <CardDescription>Screen is located at the top</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="w-full bg-muted h-2 mb-12 rounded-full relative">
-                <div className="absolute -bottom-6 w-full text-center text-xs text-muted-foreground uppercase tracking-widest">Screen</div>
-              </div>
-
-              <div className="flex flex-col gap-4 items-center overflow-x-auto pb-4">
-                {ROWS.map(row => (
-                  <div key={row} className="flex gap-4 items-center">
-                    <div className="w-6 text-center font-medium text-sm text-muted-foreground">{row}</div>
-                    <div className="flex gap-2">
-                      {COLS.map(col => {
-                        const seatId = `${row}${col}`;
-                        const isOccupied = occupiedSeats.includes(seatId);
-                        const isSelected = selectedSeats.includes(seatId);
-
-                        return (
-                          <button
-                            key={seatId}
-                            onClick={() => toggleSeat(seatId)}
-                            disabled={isOccupied}
-                            className={`
-                              w-8 h-8 rounded-t-lg transition-colors flex items-center justify-center text-xs
-                              ${isOccupied
-                                ? "bg-muted text-muted-foreground cursor-not-allowed"
-                                : isSelected
-                                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                                  : "bg-secondary hover:bg-secondary/80 text-foreground"
-                              }
-                            `}
-                            title={`Row ${row}, Seat ${col}`}
-                          >
-                            <Armchair className="w-4 h-4" />
-                          </button>
-                        );
-                      })}
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Movie Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl">Booking Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-4">
+                  {showtime.movie?.posterImage && (
+                    <div className="relative w-28 h-40 flex-shrink-0 rounded-lg overflow-hidden">
+                      <img
+                        src={showtime.movie.posterImage}
+                        alt={showtime.movie?.title || "Movie"}
+                        className="object-cover w-full h-full"
+                      />
                     </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex justify-center gap-6 mt-8">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-secondary rounded-t-lg" />
-                  <span className="text-sm text-muted-foreground">Available</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-primary rounded-t-lg" />
-                  <span className="text-sm text-muted-foreground">Selected</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-muted rounded-t-lg" />
-                  <span className="text-sm text-muted-foreground">Occupied</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Popcorn className="h-5 w-5 text-primary" />
-                Snacks & Drinks
-              </CardTitle>
-              <CardDescription>Add some refreshments to your movie experience</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[300px] pr-4">
-                <div className="space-y-4">
-                  {foodItems.map(item => (
-                    <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className="h-16 w-16 rounded-md overflow-hidden bg-muted">
-                          <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold">{item.name}</h4>
-                          <p className="text-sm text-muted-foreground">{item.description}</p>
-                          <p className="text-primary font-medium mt-1">${item.price}</p>
-                        </div>
+                  )}
+                  <div className="space-y-3 flex-1">
+                    <h2 className="text-2xl font-bold">{showtime.movie?.title}</h2>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge className="text-sm">{showtime.movie?.rating}</Badge>
+                      <Badge variant="secondary" className="text-sm">{showtime.movie?.genre}</Badge>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        <span>{formatDate(showtime.showDate)}</span>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => updateFoodQuantity(item.id, -1)}
-                          disabled={!selectedFood[item.id]}
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <span className="w-4 text-center font-medium">
-                          {selectedFood[item.id] || 0}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => updateFoodQuantity(item.id, 1)}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span>{showtime.showTime}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        <span>Screen {showtime.screenNumber}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-        </div>
-
-        <div className="lg:col-span-1">
-          <Card className="sticky top-24">
-            <CardHeader>
-              <CardTitle>Booking Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <h3 className="font-semibold text-lg">{movie.title}</h3>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>{new Date(showtime.showDate).toLocaleDateString()}</span>
-                  <Separator orientation="vertical" className="h-4" />
-                  <Clock className="h-4 w-4" />
-                  <span>{showtime.showTime}</span>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Screen</span>
-                  <span>{showtime.screenNumber}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Ticket Price</span>
-                  <span>${showtime.price}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Selected Seats</span>
-                  <span className="font-medium">
-                    {selectedSeats.length > 0 ? selectedSeats.join(", ") : "None"}
-                  </span>
-                </div>
-                {selectedSeats.length > 0 && (
-                  <div className="flex justify-between text-sm font-medium pt-1">
-                    <span>Tickets Total</span>
-                    <span>${(selectedSeats.length * showtime.price).toFixed(2)}</span>
                   </div>
-                )}
-              </div>
+                </div>
+              </CardContent>
+            </Card>
 
-              {Object.keys(selectedFood).length > 0 && (
-                <>
-                  <Separator />
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium">Extras</div>
-                    {Object.entries(selectedFood).map(([itemId, qty]) => {
-                      const item = foodItems.find(f => f.id === itemId);
-                      if (!item) return null;
-                      return (
-                        <div key={itemId} className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">{qty}x {item.name}</span>
-                          <span>${(item.price * qty).toFixed(2)}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
+            {/* Seat Selection */}
+            <SeatSelector
+              seats={seats}
+              selectedSeats={selectedSeats}
+              onSeatClick={handleSeatClick}
+            />
 
-              <Separator />
+            {/* Food Selection */}
+            <FoodSelector
+              foodItems={foodItems}
+              selectedFood={selectedFood}
+              onFoodQuantityChange={handleFoodQuantityChange}
+            />
 
-              <div className="flex justify-between items-center font-bold text-lg">
-                <span>Total</span>
-                <span>${calculateTotal().toFixed(2)}</span>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={handleBooking}
-                disabled={selectedSeats.length === 0 || isBooking}
-              >
-                {isBooking ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Booking...
-                  </>
-                ) : (
-                  "Proceed to Payment"
-                )}
-              </Button>
-            </CardFooter>
-          </Card>
+            {/* REMOVED PaymentMethodSelector from here */}
+          </div>
+
+          {/* Booking Summary */}
+          <div className="lg:col-span-1">
+            <BookingSummary
+              showtime={showtime}
+              selectedSeats={selectedSeats}
+              selectedFood={selectedFood}
+              foodItems={foodItems}
+              paymentMethod={paymentMethod}
+              isBooking={isBooking}
+              onConfirmBooking={handleInitialConfirm}
+            />
+          </div>
         </div>
       </div>
 
-      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+      {/* Payment Dialog */}
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Confirm Payment</DialogTitle>
+            <DialogTitle>Complete Payment</DialogTitle>
             <DialogDescription>
-              Select a payment method to complete your booking for {movie.title}.
+              Select your preferred payment method to complete the booking.
             </DialogDescription>
           </DialogHeader>
 
           <div className="py-4">
-            <RadioGroup value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
-              <div className="space-y-4">
-                {MOCK_CARDS.map(card => (
-                  <div key={card.id} className="flex items-center space-x-2 border p-4 rounded-lg hover:bg-muted/50 cursor-pointer" onClick={() => setSelectedPaymentMethod(String(card.id))}>
-                    <RadioGroupItem value={String(card.id)} id={`dialog-card-${card.id}`} />
-                    <Label htmlFor={`dialog-card-${card.id}`} className="flex-1 cursor-pointer">
-                      <div className="flex justify-between items-center">
-                        <span className="font-semibold">{card.type} ending in {card.last4}</span>
-                        <span className="text-sm text-muted-foreground">Expires {card.expiry}</span>
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-1">{card.holder}</div>
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </RadioGroup>
-
-            <div className="mt-6 space-y-2 bg-muted/30 p-4 rounded-lg">
-              <div className="flex justify-between text-sm">
-                <span>Tickets ({selectedSeats.length})</span>
-                <span>${(selectedSeats.length * showtime.price).toFixed(2)}</span>
-              </div>
-              {Object.keys(selectedFood).length > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span>Snacks & Drinks</span>
-                  <span>${(calculateTotal() - (selectedSeats.length * showtime.price)).toFixed(2)}</span>
-                </div>
-              )}
-              <Separator className="my-2" />
-              <div className="flex justify-between font-bold">
-                <span>Total to Pay</span>
-                <span className="text-primary">${calculateTotal().toFixed(2)}</span>
-              </div>
+            <PaymentMethodSelector
+              selectedMethod={paymentMethod}
+              onMethodSelect={handlePaymentMethodSelect}
+            />
+            <div className="mt-4 flex justify-between items-center p-4 bg-muted rounded-lg">
+              <span className="font-semibold">Total Amount:</span>
+              <span className="text-xl font-bold text-primary">${calculateTotal().toFixed(2)}</span>
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPaymentDialog(false)} disabled={isBooking}>Cancel</Button>
-            <Button onClick={confirmBooking} disabled={!selectedPaymentMethod || isBooking}>
+            <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleFinalBooking} disabled={!paymentMethod || isBooking}>
               {isBooking ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processing...
                 </>
               ) : (
-                "Pay & Confirm"
+                "Pay & Book"
               )}
             </Button>
           </DialogFooter>

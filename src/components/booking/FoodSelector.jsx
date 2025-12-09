@@ -1,6 +1,3 @@
-"use client";
-
-import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,18 +35,17 @@ export default function FoodSelector({ foodItems, selectedFood, onFoodQuantityCh
               <h3 className="font-semibold text-lg mb-3 capitalize">{category}</h3>
               <div className="space-y-3">
                 {groupedFood[category].map(food => (
-                  <div 
-                    key={food.id} 
+                  <div
+                    key={food.id}
                     className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow bg-card"
                   >
                     <div className="flex items-center gap-4 flex-1">
-                      {food.imageUrl ? (
+                      {food.image ? (
                         <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
-                          <Image
-                            src={food.imageUrl}
+                          <img
+                            src={food.image}
                             alt={food.name}
-                            fill
-                            className="object-cover"
+                            className="object-cover w-full h-full"
                           />
                         </div>
                       ) : (

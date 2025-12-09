@@ -45,15 +45,15 @@ export default function SeatSelector({ seats, selectedSeats, onSeatClick }) {
         </div>
 
         {/* Seats Grid */}
-        <div className="space-y-4 overflow-x-auto pb-4">
+        <div className="space-y-4 overflow-x-auto pb-4 ">
           {sortedRows.map(row => (
             <div key={row} className="flex items-center gap-2">
               <div className="w-10 text-center font-bold text-sm text-muted-foreground">{row}</div>
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-2 flex-wrap mt-2 ">
                 {groupedSeats[row]
                   .sort((a, b) => {
-                    const numA = parseInt(a.seatNumber) || 0;
-                    const numB = parseInt(b.seatNumber) || 0;
+                    const numA = parseInt(a.seatNumber.replace(/\D/g, '')) || 0;
+                    const numB = parseInt(b.seatNumber.replace(/\D/g, '')) || 0;
                     return numA - numB;
                   })
                   .map(seat => {
@@ -65,11 +65,11 @@ export default function SeatSelector({ seats, selectedSeats, onSeatClick }) {
                         disabled={seat.isBooked}
                         className={`
                           w-10 h-10 rounded text-xs font-semibold transition-all transform hover:scale-110
-                          ${seat.isBooked 
-                            ? 'bg-yellow-500 cursor-not-allowed opacity-80 text-yellow-900' 
+                          ${seat.isBooked
+                            ? 'bg-yellow-500 cursor-not-allowed opacity-80 text-yellow-900'
                             : isSelected
-                            ? 'bg-primary text-primary-foreground shadow-lg scale-110'
-                            : 'border-2 border-primary hover:bg-primary/20 hover:border-primary/80'
+                              ? 'bg-primary text-primary-foreground shadow-lg scale-110'
+                              : 'border-2 border-primary hover:bg-primary/20 hover:border-primary/80'
                           }
                         `}
                         title={seat.isBooked ? 'Already Booked' : `${seat.row}${seat.seatNumber}`}

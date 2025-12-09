@@ -115,7 +115,7 @@ export default function BookingSummary({
             <span className="text-lg font-bold">Total Amount</span>
             <span className="text-2xl font-bold text-primary">${totalAmount}</span>
           </div>
-          
+
           {selectedSeats.length > 0 && (
             <p className="text-xs text-muted-foreground">
               Including all taxes and fees
@@ -128,7 +128,7 @@ export default function BookingSummary({
           className="w-full"
           size="lg"
           onClick={onConfirmBooking}
-          disabled={selectedSeats.length === 0 || !paymentMethod || isBooking}
+          disabled={selectedSeats.length === 0 || isBooking}
         >
           {isBooking ? (
             <>
@@ -138,7 +138,7 @@ export default function BookingSummary({
           ) : (
             <>
               <CheckCircle2 className="mr-2 h-5 w-5" />
-              Confirm Booking - ${totalAmount}
+              Proceed to Payment
             </>
           )}
         </Button>
@@ -148,13 +148,6 @@ export default function BookingSummary({
           <div className="flex items-start gap-2 text-sm text-muted-foreground bg-muted p-3 rounded-lg">
             <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
             <span>Please select at least one seat to continue</span>
-          </div>
-        )}
-        
-        {selectedSeats.length > 0 && !paymentMethod && (
-          <div className="flex items-start gap-2 text-sm text-muted-foreground bg-muted p-3 rounded-lg">
-            <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <span>Please select a payment method</span>
           </div>
         )}
       </CardContent>

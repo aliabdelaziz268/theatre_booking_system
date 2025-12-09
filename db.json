@@ -107,30 +107,89 @@
       "totalSeats": 80,
       "availableSeats": 40,
       "price": 14.99
-    }
-  ],
-  "seats": [
-    {
-      "id": "1",
-      "showtimeId": 1,
-      "seatNumber": "A1",
-      "row": "A",
-      "column": 1,
-      "seatType": "regular",
-      "price": 12.99,
-      "isBooked": false
     },
     {
-      "id": "2",
-      "showtimeId": 1,
-      "seatNumber": "A2",
-      "row": "A",
-      "column": 2,
-      "seatType": "regular",
-      "price": 12.99,
-      "isBooked": false
+      "id": "5",
+      "movieId": 3,
+      "showDate": "2026-12-15",
+      "showTime": "16:00",
+      "screenNumber": 3,
+      "totalSeats": 60,
+      "availableSeats": 60,
+      "price": 11.99
+    },
+    {
+      "id": "6",
+      "movieId": 3,
+      "showDate": "2026-12-15",
+      "showTime": "20:00",
+      "screenNumber": 3,
+      "totalSeats": 60,
+      "availableSeats": 45,
+      "price": 13.99
+    },
+    {
+      "id": "7",
+      "movieId": 4,
+      "showDate": "2026-12-15",
+      "showTime": "13:00",
+      "screenNumber": 4,
+      "totalSeats": 120,
+      "availableSeats": 100,
+      "price": 15.99
+    },
+    {
+      "id": "8",
+      "movieId": 4,
+      "showDate": "2026-12-15",
+      "showTime": "17:30",
+      "screenNumber": 4,
+      "totalSeats": 120,
+      "availableSeats": 80,
+      "price": 18.99
+    },
+    {
+      "id": "9",
+      "movieId": 5,
+      "showDate": "2026-12-15",
+      "showTime": "18:00",
+      "screenNumber": 5,
+      "totalSeats": 90,
+      "availableSeats": 20,
+      "price": 14.99
+    },
+    {
+      "id": "10",
+      "movieId": 5,
+      "showDate": "2026-12-15",
+      "showTime": "21:00",
+      "screenNumber": 5,
+      "totalSeats": 90,
+      "availableSeats": 50,
+      "price": 14.99
+    },
+    {
+      "id": "11",
+      "movieId": 6,
+      "showDate": "2026-12-15",
+      "showTime": "14:00",
+      "screenNumber": 1,
+      "totalSeats": 150,
+      "availableSeats": 10,
+      "price": 16.99
+    },
+    {
+      "id": "12",
+      "movieId": 6,
+      "showDate": "2026-12-15",
+      "showTime": "19:00",
+      "screenNumber": 1,
+      "totalSeats": 150,
+      "availableSeats": 0,
+      "price": 19.99
     }
   ],
+  "seats": [],
   "foodItems": [
     {
       "id": "1",
@@ -160,35 +219,7 @@
       "available": true
     }
   ],
-  "bookings": [
-    {
-      "id": "57bb",
-      "userId": "d5c3",
-      "showtimeId": 1,
-      "movieId": "1",
-      "seats": [
-        "A1",
-        "A2",
-        "A3"
-      ],
-      "foodItems": [
-        {
-          "id": "2",
-          "quantity": 1,
-          "price": 4.99
-        },
-        {
-          "id": "3",
-          "quantity": 1,
-          "price": 6.99
-        }
-      ],
-      "totalPrice": 50.95,
-      "bookingDate": "2025-12-08T17:36:26.687Z",
-      "paymentMethodId": "1",
-      "status": "confirmed"
-    }
-  ],
+  "bookings": [],
   "users": [
     {
       "id": "1",
